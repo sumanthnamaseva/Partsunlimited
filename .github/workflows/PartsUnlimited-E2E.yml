@@ -12,13 +12,13 @@ name: End2End Workflow
 on:
   push:
     branches: [master]
-    paths: [.github/workflows/PartsUnlimited-E2E.yml]
+    paths-ignore: [.github/workflows/PartsUnlimited-E2E.yml]
   workflow_dispatch:   
 env:
   SLN_FILE: PartsUnlimited.sln
   #Provide path of the site inside drop generated after build job as PACKAGE_TEMP_PATH
   PACKAGE_TEMP_PATH: Content\D_C\a\PartsUnlimited\PartsUnlimited\src\PartsUnlimitedWebsite\obj\Release\Package\PackageTmp
-  WEB_APP_NAME: pulweb
+  IIS_SITE_PATH: C:\pulwebsite
   ACTIONS_ALLOW_UNSECURE_COMMANDS: true
 jobs:
   build:
@@ -43,8 +43,8 @@ jobs:
           path: ${{github.workspace}}\stagingdir
 
   deploy:
-    name: DEPLOY TO AZURE WEB APP
-    runs-on: windows-latest
+    name: DEPLOY TO IIS
+    runs-on: [self-hosted,iis]
     needs: [build]
     steps:
       - name: Download Build Artifact
@@ -57,6 +57,13 @@ jobs:
         shell: pwsh
       - run: dir
         working-directory: .\webapp\${{env.PACKAGE_TEMP_PATH}}
+      - name: Replace tokens
+
+        uses: cschleiden/replace-tokens@v1.1
+        with:
+          files: Web.config
+      - run: Remove-Item .\** -Recurse
+        working-directory: ${{env.IIS_SITE_PATH}}
 #       - name: Azure WebApp Deploy
 #         uses: Azure/webapps-deploy@v2
 #         with:
