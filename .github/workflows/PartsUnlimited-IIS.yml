@@ -1,4 +1,4 @@
-name: IIS-workfloe
+name: IIS-workflow
 on:
   push:
     branches: [master]
