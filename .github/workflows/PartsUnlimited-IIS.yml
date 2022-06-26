@@ -6,7 +6,7 @@ on:
 env:
   SLN_FILE: PartsUnlimited.sln
   IIS_SITE_PATH: C:\pulwebsite
-  IIS_POOL: pulweb
+  IIS_WEBSITE: pulweb
   ACTIONS_ALLOW_UNSECURE_COMMANDS: true 
 jobs:
   build:
@@ -60,7 +60,7 @@ jobs:
         working-directory: ${{env.IIS_SITE_PATH}}
         name: Clear IIS path
       
-      - run: Copy-Item ./webapp/${{env.PACKAGE_TEMP_PATH}} -Destination ${{env.IIS_SITE_PATH}} -Recurse
+      - run: Copy-Item ./webapp/${{env.PACKAGE_TEMP_PATH}}/** -Destination ${{env.IIS_SITE_PATH}} -Recurse
         name: Copy to IIS path
       
       - run: |
