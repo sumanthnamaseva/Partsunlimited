@@ -47,7 +47,7 @@ jobs:
           path: ${{github.workspace}}
   
       - name: Extract Artifact
-        run: expand-archive -path '*.zip' -destinationpath '.\webapp'
+        run: expand-archive -path '*.zip' -destinationpath '.\webapp' -force
 
       - name: Replace tokens
         uses: cschleiden/replace-tokens@v1.1
