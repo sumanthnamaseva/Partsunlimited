@@ -10,12 +10,16 @@ name: End2End Workflow
 # Change the variable values in env section if required.
 
 on:
+  push:
+    branches: [master]
+    paths: [.github/workflows/PartsUnlimited-E2E.yml]
   workflow_dispatch:   
 env:
   SLN_FILE: PartsUnlimited.sln
   #Provide path of the site inside drop generated after build job as PACKAGE_TEMP_PATH
   PACKAGE_TEMP_PATH: Content\D_C\a\PartsUnlimited\PartsUnlimited\src\PartsUnlimitedWebsite\obj\Release\Package\PackageTmp
   WEB_APP_NAME: pulweb
+  ACTIONS_ALLOW_UNSECURE_COMMANDS: true
 jobs:
   build:
     name: BUILD USING VS2019
