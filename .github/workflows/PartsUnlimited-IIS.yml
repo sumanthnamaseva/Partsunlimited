@@ -1,25 +1,13 @@
-name: End2End Workflow
-
-# Prerequisities:
-# -----------------
-# Create Azure Web App (ASP.NET v4.7) and provide the publish profile in secrets with name WEB_APP_PUBLISH_PROFILE.
-# Create SQL Server & DB on Azure and add the connection string on configuration section of Azure Web App.
-# Name the connection string as DefaultConnectionString (Need not update in Web.config).
-# Enable "Allow Azure services and resources to access this server" in Firewalls section of SQL Server.
-# Add Application Settings on app service with same name in Web.config. Refer Web.config.
-# Change the variable values in env section if required.
-
+name: IIS-workfloe
 on:
   push:
     branches: [master]
-    paths-ignore: [.github/workflows/PartsUnlimited-E2E.yml]
   workflow_dispatch:   
 env:
   SLN_FILE: PartsUnlimited.sln
-  #Provide path of the site inside drop generated after build job as PACKAGE_TEMP_PATH
-  PACKAGE_TEMP_PATH: Content\D_C\a\PartsUnlimited\PartsUnlimited\src\PartsUnlimitedWebsite\obj\Release\Package\PackageTmp
   IIS_SITE_PATH: C:\pulwebsite
-  ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+  IIS_POOL: pulweb
+  ACTIONS_ALLOW_UNSECURE_COMMANDS: true 
 jobs:
   build:
     name: BUILD USING VS2019
@@ -46,27 +34,37 @@ jobs:
     name: DEPLOY TO IIS
     runs-on: [self-hosted,iis]
     needs: [build]
+    defaults:
+      run: 
+        shell: powershell
+    env:
+      PACKAGE_TEMP_PATH: Content\D_C\a\PartsUnlimited\PartsUnlimited\src\PartsUnlimitedWebsite\obj\Release\Package\PackageTmp
     steps:
       - name: Download Build Artifact
         uses: actions/download-artifact@v2
         with:
           name: drop
           path: ${{github.workspace}}
+  
       - name: Extract Artifact
         run: expand-archive -path '*.zip' -destinationpath '.\webapp'
-        shell: pwsh
-      - run: dir
-        working-directory: .\webapp\${{env.PACKAGE_TEMP_PATH}}
-      - name: Replace tokens
 
+      - name: Replace tokens
         uses: cschleiden/replace-tokens@v1.1
         with:
-          files: Web.config
-      - run: Remove-Item .\** -Recurse
+          files: '["./webapp/${{env.PACKAGE_TEMP_PATH}}/Web.config"]'
+        env:
+          SqlConnectionString: ${{secrets.SqlConnectionString}}
+        
+      - run: Remove-Item ./** -Recurse
         working-directory: ${{env.IIS_SITE_PATH}}
-#       - name: Azure WebApp Deploy
-#         uses: Azure/webapps-deploy@v2
-#         with:
-#           app-name: ${{env.WEB_APP_NAME}}
-#           publish-profile: ${{secrets.WEB_APP_PUBLISH_PROFILE}}
-#           package: webapp\${{env.PACKAGE_TEMP_PATH}}
+        name: Clear IIS path
+      
+      - run: Copy-Item ./webapp/${{env.PACKAGE_TEMP_PATH}} -Destination ${{env.IIS_SITE_PATH}} -Recurse
+        name: Copy to IIS path
+      
+      - run: |
+          Import-Module WebAdministration
+          Stop-WebSite ${{env.IIS_WEBSITE}}
+          Start-WebSite ${{env.IIS_WEBSITE}}
+        name: Restart IIS site
