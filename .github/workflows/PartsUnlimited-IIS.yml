@@ -30,7 +30,7 @@ jobs:
         working-directory: ${{github.workspace}}/stagingdir
         
       - name: Upload Build Artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: drop
           path: ${{github.workspace}}/stagingdir/webapp/${{env.PACKAGE__PATH}}
